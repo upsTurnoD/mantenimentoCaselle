@@ -1,4 +1,165 @@
-<script>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestione Sostituzione Caselle</title>
+  <style>
+    :root {
+      --primary: #0066cc;
+      --success: #dcffe4;
+      --success-text: #006622;
+      --warning: #fff5c2;
+      --warning-text: #7a5200;
+      --danger: #ffdce0;
+      --danger-text: #9e0012;
+      --bg-color: #f4f6f8;
+      --card-bg: #ffffff;
+      --text-main: #333333;
+    }
+
+    * { box-sizing: border-box; }
+
+    body { 
+      font-family: system-ui, -apple-system, sans-serif; 
+      margin: 0; 
+      padding: 15px; 
+      background-color: var(--bg-color); 
+      color: var(--text-main);
+    }
+
+    .header-container { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-start; 
+      gap: 15px;
+      margin-bottom: 20px; 
+      flex-wrap: wrap;
+    }
+
+    h1 { 
+      color: var(--text-main); 
+      margin: 0; 
+      font-size: 1.5rem; 
+    }
+
+    .btn-drive { 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 8px; 
+      background-color: #0f9d58; 
+      color: white; 
+      padding: 10px 16px; 
+      text-decoration: none; 
+      border-radius: 6px; 
+      font-weight: bold; 
+      font-size: 0.9rem; 
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+      white-space: nowrap;
+    }
+    .btn-drive:hover { background-color: #0b8043; }
+
+    .alert-box { 
+      background: #ffebe9; 
+      border-left: 5px solid #d9381e; 
+      padding: 15px; 
+      margin-bottom: 20px; 
+      border-radius: 6px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .alert-box h2 { margin-top: 0; color: #d9381e; font-size: 1.1rem; }
+    .alert-box ul { margin-bottom: 0; padding-left: 20px; }
+
+    /* Contenitore tabella responsive */
+    .table-responsive {
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow-x: auto; /* Permette lo scorrimento orizzontale su schermi piccolissimi */
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      white-space: nowrap; /* Evita che il testo vada a capo in modo disordinato */
+    }
+    
+    th, td { 
+      padding: 14px 16px; 
+      text-align: left; 
+      border-bottom: 1px solid #eee; 
+    }
+    
+    th { 
+      background: var(--primary); 
+      color: #fff; 
+      font-weight: 600;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .badge { 
+      padding: 6px 10px; 
+      border-radius: 12px; 
+      font-size: 0.8rem; 
+      font-weight: bold; 
+      display: inline-block;
+    }
+    .badge-danger { background: var(--danger); color: var(--danger-text); }
+    .badge-warning { background: var(--warning); color: var(--warning-text); }
+    .badge-ok { background: var(--success); color: var(--success-text); }
+
+    /* Media query per smartphone (sotto i 600px) */
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      
+      .header-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn-drive {
+        text-align: center;
+        justify-content: center;
+      }
+
+      h1 { font-size: 1.25rem; }
+
+      /* Ottimizzazione tabella per mobile: se preferisci lo scroll orizzontale fluido, la tabella rimane intatta grazie a .table-responsive */
+      th, td { padding: 10px 12px; font-size: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-container">
+    <h1>Monitoraggio Sostituzioni "Caselle"</h1>
+    <a href="https://docs.google.com/spreadsheets/d/1_3E3TLIUcYghEogWHK-FrImUcMdc5rNOx_RJOoVqZa4/edit?usp=sharing" target="_blank" class="btn-drive">
+      📊 Modifica su Google Sheet
+    </a>
+  </div>
+
+  <div id="alertsContainer"></div>
+
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome Personale</th>
+          <th>Ultima Sostituzione</th>
+          <th>Giorni Rimanenti</th>
+          <th>Stato</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr><td colspan="4" style="text-align:center;">Caricamento dati in corso...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
     const SHEET_ID = '1_3E3TLIUcYghEogWHK-FrImUcMdc5rNOx_RJOoVqZa4';
     const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
 
@@ -7,11 +168,9 @@
 
     function parseDateIT(dateStr) {
       if (!dateStr) return null;
-      // Pulisce eventuali virgolette residue
       dateStr = dateStr.replace(/"/g, '').trim();
       const parts = dateStr.split('/');
       if (parts.length === 3) {
-        // Restituisce la data con orario azzerato per un calcolo pulito dei giorni
         return new Date(parts[2], parts[1] - 1, parts[0]);
       }
       return new Date(dateStr);
@@ -28,7 +187,6 @@
         let htmlTable = '';
         let personeInAlert = [];
         
-        // Imposta la data di oggi a mezzanotte per un confronto preciso sui giorni
         const oggi = new Date();
         oggi.setHours(0, 0, 0, 0);
 
@@ -66,11 +224,11 @@
           `;
         }
 
-        document.getElementById('tableBody').innerHTML = htmlTable || '<tr><td colspan="4">Nessun dato trovato.</td></tr>';
+        document.getElementById('tableBody').innerHTML = htmlTable || '<tr><td colspan="4" style="text-align:center;">Nessun dato trovato.</td></tr>';
         mostraAlert(personeInAlert);
 
       } catch (error) {
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Errore nel caricamento dei dati. Assicurati che il foglio sia condiviso correttamente.</td></tr>';
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="4" style="text-align:center;">Errore nel caricamento. Verifica la connessione o la condivisione del foglio.</td></tr>';
       }
     }
 
@@ -93,7 +251,6 @@
       container.innerHTML = alertHTML;
     }
 
-    // Parser CSV migliorato per gestire correttamente le virgole all'interno delle celle
     function parseCSV(text) {
       const lines = text.split('\n');
       return lines.map(line => {
@@ -106,7 +263,7 @@
           if (char === '"') {
             inQuotes = !inQuotes;
           } else if (char === ',' && !inQuotes) {
-            row.iterrows ? null : row.push(entry.trim());
+            row.push(entry.trim());
             entry = '';
             continue;
           }
@@ -119,3 +276,5 @@
 
     caricaDati();
   </script>
+</body>
+</html>
