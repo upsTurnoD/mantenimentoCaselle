@@ -38,32 +38,43 @@
   </table>
 
   <script>
-    // ID GOOGLE SHEET
-    const SHEET_ID = 'https://docs.google.com/spreadsheets/d/1_3E3TLIUcYghEogWHK-FrImUcMdc5rNOx_RJOoVqZa4/edit?usp=sharing';
+    const SHEET_ID = '1_3E3TLIUcYghEogWHK-FrImUcMdc5rNOx_RJOoVqZa4';
     const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
 
     const LIMITE_GIORNI = 90;
     const SOGLIA_ALERT = 10;
 
+    // Converte la data dal formato DD/MM/YYYY a un oggetto Date valido
+    function parseDateIT(dateStr) {
+      if (!dateStr) return null;
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+      }
+      return new Date(dateStr);
+    }
+
     async function caricaDati() {
       try {
         const response = await fetch(CSV_URL);
+        if (!response.ok) throw new Error('Errore nella rete');
+        
         const dataText = await response.text();
         const righe = parseCSV(dataText);
         
         let htmlTable = '';
         let personeInAlert = [];
-
         const oggi = new Date();
 
-        // Salta l'intestazione (i = 1)
         for (let i = 1; i < righe.length; i++) {
           const nome = righe[i][0];
-          const dataStr = righe[i][1]; // Formato YYYY-MM-DD
+          const dataStr = righe[i][1];
           
           if (!nome || !dataStr) continue;
 
-          const ultimaData = new Date(dataStr);
+          const ultimaData = parseDateIT(dataStr);
+          if (!ultimaData || isNaN(ultimaData)) continue;
+
           const diffTempo = oggi - ultimaData;
           const giorniTrascorsi = Math.floor(diffTempo / (1000 * 60 * 60 * 24));
           const giorniRimanenti = LIMITE_GIORNI - giorniTrascorsi;
@@ -89,11 +100,11 @@
           `;
         }
 
-        document.getElementById('tableBody').innerHTML = htmlTable;
+        document.getElementById('tableBody').innerHTML = htmlTable || '<tr><td colspan="4">Nessun dato trovato.</td></tr>';
         mostraAlert(personeInAlert);
 
       } catch (error) {
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Errore nel caricamento dei dati da Google Drive. Controlla l\'ID o le autorizzazioni del foglio.</td></tr>';
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Errore nel caricamento dei dati. Assicurati che il foglio sia condiviso con "Chiunque abbia il link".</td></tr>';
       }
     }
 
@@ -113,7 +124,6 @@
       container.innerHTML = alertHTML;
     }
 
-    // Parser CSV essenziale
     function parseCSV(text) {
       return text.split('\n').map(row => {
         return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
