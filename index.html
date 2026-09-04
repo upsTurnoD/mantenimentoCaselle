@@ -1,52 +1,4 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestione Sostituzione Caselle</title>
-  <style>
-    body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; background-color: #f4f6f8; }
-    .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    h1 { color: #333; margin: 0; }
-    .btn-drive { display: inline-flex; align-items: center; gap: 8px; background-color: #0f9d58; color: white; padding: 10px 16px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .btn-drive:hover { background-color: #0b8043; }
-    .alert-box { background: #ffebe9; border-left: 5px solid #d9381e; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
-    .alert-box h2 { margin-top: 0; color: #d9381e; font-size: 1.1rem; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #0066cc; color: #fff; }
-    .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; }
-    .badge-danger { background: #ffdce0; color: #9e0012; }
-    .badge-warning { background: #fff5c2; color: #7a5200; }
-    .badge-ok { background: #dcffe4; color: #006622; }
-  </style>
-</head>
-<body>
-
-  <div class="header-container">
-    <h1>Monitoraggio Sostituzioni "Caselle"</h1>
-    <a href="https://docs.google.com/spreadsheets/d/1_3E3TLIUcYghEogWHK-FrImUcMdc5rNOx_RJOoVqZa4/edit?usp=sharing" target="_blank" class="btn-drive">
-      📊 Modifica Dati su Google Sheet
-    </a>
-  </div>
-
-  <div id="alertsContainer"></div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Nome Personale</th>
-        <th>Ultima Sostituzione</th>
-        <th>Giorni Rimanenti</th>
-        <th>Stato</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody">
-      <tr><td colspan="4">Caricamento dati in corso...</td></tr>
-    </tbody>
-  </table>
-
-  <script>
+<script>
     const SHEET_ID = '1_3E3TLIUcYghEogWHK-FrImUcMdc5rNOx_RJOoVqZa4';
     const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
 
@@ -55,8 +7,11 @@
 
     function parseDateIT(dateStr) {
       if (!dateStr) return null;
+      // Pulisce eventuali virgolette residue
+      dateStr = dateStr.replace(/"/g, '').trim();
       const parts = dateStr.split('/');
       if (parts.length === 3) {
+        // Restituisce la data con orario azzerato per un calcolo pulito dei giorni
         return new Date(parts[2], parts[1] - 1, parts[0]);
       }
       return new Date(dateStr);
@@ -72,7 +27,10 @@
         
         let htmlTable = '';
         let personeInAlert = [];
+        
+        // Imposta la data di oggi a mezzanotte per un confronto preciso sui giorni
         const oggi = new Date();
+        oggi.setHours(0, 0, 0, 0);
 
         for (let i = 1; i < righe.length; i++) {
           const nome = righe[i][0];
@@ -101,7 +59,7 @@
           htmlTable += `
             <tr>
               <td><strong>${nome}</strong></td>
-              <td>${dataStr}</td>
+              <td>${dataStr.replace(/"/g, '')}</td>
               <td>${giorniRimanenti} giorni</td>
               <td>${statoBadge}</td>
             </tr>
@@ -135,13 +93,29 @@
       container.innerHTML = alertHTML;
     }
 
+    // Parser CSV migliorato per gestire correttamente le virgole all'interno delle celle
     function parseCSV(text) {
-      return text.split('\n').map(row => {
-        return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
+      const lines = text.split('\n');
+      return lines.map(line => {
+        const row = [];
+        let inQuotes = false;
+        let entry = '';
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            row.iterrows ? null : row.push(entry.trim());
+            entry = '';
+            continue;
+          }
+          entry += char;
+        }
+        row.push(entry.trim());
+        return row.map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
       });
     }
 
     caricaDati();
   </script>
-</body>
-</html>
