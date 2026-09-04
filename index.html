@@ -17,6 +17,8 @@
       --text-main: #333333;
     }
 
+    * { box-sizing: border-box; }
+
     body { 
       font-family: system-ui, -apple-system, sans-serif; 
       margin: 0; 
@@ -25,22 +27,24 @@
       color: var(--text-main);
     }
 
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
     .header-container { 
       display: flex; 
       justify-content: space-between; 
-      align-items: flex-start; 
+      align-items: center; 
       gap: 15px;
       margin-bottom: 20px; 
       flex-wrap: wrap;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
     }
 
     h1 { 
       color: var(--text-main); 
       margin: 0; 
-      font-size: 1.5rem; 
+      font-size: 1.4rem; 
     }
 
     .btn-drive { 
@@ -55,7 +59,6 @@
       font-weight: bold; 
       font-size: 0.9rem; 
       box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-      white-space: nowrap;
     }
     .btn-drive:hover { background-color: #0b8043; }
 
@@ -66,43 +69,54 @@
       margin-bottom: 20px; 
       border-radius: 6px; 
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
     }
     .alert-box h2 { margin-top: 0; color: #d9381e; font-size: 1.1rem; }
     .alert-box ul { margin-bottom: 0; padding-left: 20px; }
 
-    /* Contenitore tabella */
-    .table-container {
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
+    /* Lista a schede verticale (nessun overflow orizzontale) */
+    .cards-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      background: #fff; 
-      border-radius: 8px; 
-      overflow: hidden; 
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-left: 5px solid var(--primary);
     }
-    
-    th, td { 
-      padding: 14px 15px; 
-      text-align: left; 
-      border-bottom: 1px solid #eee; 
+
+    .card.status-danger { border-left-color: #d9381e; }
+    .card.status-warning { border-left-color: #e6b800; }
+    .card.status-ok { border-left-color: #006622; }
+
+    .card-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
     }
-    
-    th { 
-      background: var(--primary); 
-      color: #fff; 
+
+    .card-label {
+      color: #666;
       font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--text-main);
     }
 
     .badge { 
-      padding: 6px 10px; 
+      padding: 5px 10px; 
       border-radius: 12px; 
       font-size: 0.8rem; 
       font-weight: bold; 
@@ -111,99 +125,32 @@
     .badge-warning { background: var(--warning); color: var(--warning-text); }
     .badge-ok { background: var(--success); color: var(--success-text); }
 
-    /* --- STILE RESPONSIVE PER MOBILE (Sotto 600px) --- */
-    /* Trasforma la tabella in una visualizzazione a schede (Cards) */
-    @media (max-width: 600px) {
-      body { padding: 10px; }
-      
+    @media (max-width: 500px) {
       .header-container {
         flex-direction: column;
-        align-items: center;
-        text-align: center;
+        align-items: stretch;
       }
-
       .btn-drive {
-        width: 100%;
         justify-content: center;
-        margin-top: 10px;
-      }
-
-      /* Nascondi l'intestazione della tabella */
-      table thead {
-        display: none;
-      }
-      
-      /* Trasforma le righe in blocchi */
-      table tr {
-        display: block;
-        margin-bottom: 15px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        background: #fff;
-        padding: 10px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      }
-      
-      /* Trasforma le celle in righe di testo con etichetta */
-      table td {
-        display: block;
-        text-align: right;
-        padding: 8px 10px;
-        border-bottom: 1px solid #f0f0f0;
-        font-size: 0.95rem;
-        position: relative;
-        min-height: 40px;
-        line-height: 1.4;
-      }
-
-      table td:last-child {
-        border-bottom: none;
-      }
-      
-      /* Aggiungi l'etichetta (es. "Nome Personale:") prima del valore */
-      table td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 10px;
-        width: 50%;
-        text-align: left;
-        font-weight: bold;
-        color: #555;
-      }
-
-      /* Stile speciale per il badge dello stato */
-      table td .badge {
-        margin-top: 5px;
-        display: inline-block;
       }
     }
   </style>
 </head>
 <body>
 
-  <div class="header-container">
-    <h1>Monitoraggio Sostituzioni "Caselle"</h1>
-    <a href="https://docs.google.com/spreadsheets/d/1_3E3TLIUcYghEogWHK-FrImUcMdc5rNOx_RJOoVqZa4/edit?usp=sharing" target="_blank" class="btn-drive">
-      📊 Modifica su Google Sheet
-    </a>
-  </div>
+  <div class="container">
+    <div class="header-container">
+      <h1>Monitoraggio Sostituzioni</h1>
+      <a href="https://docs.google.com/spreadsheets/d/1_3E3TLIUcYghEogWHK-FrImUcMdc5rNOx_RJOoVqZa4/edit?usp=sharing" target="_blank" class="btn-drive">
+        📊 Modifica su Google Sheet
+      </a>
+    </div>
 
-  <div id="alertsContainer"></div>
+    <div id="alertsContainer"></div>
 
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Nome Personale</th>
-          <th>Ultima Sostituzione</th>
-          <th>Giorni Rimanenti</th>
-          <th>Stato</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody">
-        <tr><td colspan="4" style="text-align:center;">Caricamento dati in corso...</td></tr>
-      </tbody>
-    </table>
+    <div id="cardsList" class="cards-container">
+      <div class="card">Caricamento dati in corso...</div>
+    </div>
   </div>
 
   <script>
@@ -231,7 +178,7 @@
         const dataText = await response.text();
         const righe = parseCSV(dataText);
         
-        let htmlTable = '';
+        let htmlCards = '';
         let personeInAlert = [];
         const oggi = new Date();
         oggi.setHours(0, 0, 0, 0);
@@ -250,32 +197,43 @@
           const giorniRimanenti = LIMITE_GIORNI - giorniTrascorsi;
 
           let statoBadge = '';
+          let cardClass = 'status-ok';
+          
           if (giorniRimanenti <= 0) {
             statoBadge = `<span class="badge badge-danger">SCADUTO (${Math.abs(giorniRimanenti)} gg fa)</span>`;
+            cardClass = 'status-danger';
             personeInAlert.push({ nome, giorniRimanenti });
           } else if (giorniRimanenti <= SOGLIA_ALERT) {
             statoBadge = `<span class="badge badge-warning">IN SCADENZA</span>`;
+            cardClass = 'status-warning';
             personeInAlert.push({ nome, giorniRimanenti });
           } else {
             statoBadge = `<span class="badge badge-ok">OK</span>`;
           }
 
-          // --- MODIFICA: Aggiunto l'attributo data-label a ogni cella ---
-          htmlTable += `
-            <tr>
-              <td data-label="Nome Personale:"><strong>${nome}</strong></td>
-              <td data-label="Ultima Sostituzione:">${dataStr.replace(/"/g, '')}</td>
-              <td data-label="Giorni Rimanenti:">${giorniRimanenti} giorni</td>
-              <td data-label="Stato:">${statoBadge}</td>
-            </tr>
+          htmlCards += `
+            <div class="card ${cardClass}">
+              <div class="card-row">
+                <span class="card-title">${nome}</span>
+                <div>${statoBadge}</div>
+              </div>
+              <div class="card-row" style="margin-top: 4px;">
+                <span class="card-label">Ultima Sostituzione</span>
+                <span>${dataStr.replace(/"/g, '')}</span>
+              </div>
+              <div class="card-row">
+                <span class="card-label">Giorni Rimanenti</span>
+                <strong>${giorniRimanenti} giorni</strong>
+              </div>
+            </div>
           `;
         }
 
-        document.getElementById('tableBody').innerHTML = htmlTable || '<tr><td colspan="4" style="text-align:center;">Nessun dato trovato.</td></tr>';
+        document.getElementById('cardsList').innerHTML = htmlCards || '<div class="card">Nessun dato trovato.</div>';
         mostraAlert(personeInAlert);
 
       } catch (error) {
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="4" style="text-align:center;">Errore nel caricamento. Verifica la connessione o la condivisione del foglio.</td></tr>';
+        document.getElementById('cardsList').innerHTML = '<div class="card" style="border-left-color: #d9381e;">Errore nel caricamento dei dati.</div>';
       }
     }
 
