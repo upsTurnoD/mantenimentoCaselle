@@ -6,7 +6,10 @@
   <title>Gestione Sostituzione Caselle</title>
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; background-color: #f4f6f8; }
-    h1 { color: #333; }
+    .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { color: #333; margin: 0; }
+    .btn-drive { display: inline-flex; align-items: center; gap: 8px; background-color: #0f9d58; color: white; padding: 10px 16px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .btn-drive:hover { background-color: #0b8043; }
     .alert-box { background: #ffebe9; border-left: 5px solid #d9381e; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
     .alert-box h2 { margin-top: 0; color: #d9381e; font-size: 1.1rem; }
     table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -20,7 +23,13 @@
 </head>
 <body>
 
-  <h1>Monitoraggio Sostituzioni "Caselle"</h1>
+  <div class="header-container">
+    <h1>Monitoraggio Sostituzioni "Caselle"</h1>
+    <a href="https://docs.google.com/spreadsheets/d/1_3E3TLIUcYghEogWHK-FrImUcMdc5rNOx_RJOoVqZa4/edit?usp=sharing" target="_blank" class="btn-drive">
+      📊 Modifica Dati su Google Sheet
+    </a>
+  </div>
+
   <div id="alertsContainer"></div>
 
   <table>
@@ -44,7 +53,6 @@
     const LIMITE_GIORNI = 90;
     const SOGLIA_ALERT = 10;
 
-    // Converte la data dal formato DD/MM/YYYY a un oggetto Date valido
     function parseDateIT(dateStr) {
       if (!dateStr) return null;
       const parts = dateStr.split('/');
@@ -58,7 +66,7 @@
       try {
         const response = await fetch(CSV_URL);
         if (!response.ok) throw new Error('Errore nella rete');
-        
+
         const dataText = await response.text();
         const righe = parseCSV(dataText);
         
@@ -104,13 +112,16 @@
         mostraAlert(personeInAlert);
 
       } catch (error) {
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Errore nel caricamento dei dati. Assicurati che il foglio sia condiviso con "Chiunque abbia il link".</td></tr>';
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Errore nel caricamento dei dati. Assicurati che il foglio sia condiviso correttamente.</td></tr>';
       }
     }
 
     function mostraAlert(elenco) {
       const container = document.getElementById('alertsContainer');
-      if (elenco.length === 0) return;
+      if (elenco.length === 0) {
+        container.innerHTML = '';
+        return;
+      }
 
       let alertHTML = `<div class="alert-box"><h2>⚠️ Attenzione: Sostituzioni necessarie!</h2><ul>`;
       elenco.forEach(p => {
