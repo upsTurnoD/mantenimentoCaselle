@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestione Sostituzione Caselle</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 20px; background-color: #f4f6f8; }
+    h1 { color: #333; }
+    .alert-box { background: #ffebe9; border-left: 5px solid #d9381e; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
+    .alert-box h2 { margin-top: 0; color: #d9381e; font-size: 1.1rem; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; }
+    th { background: #0066cc; color: #fff; }
+    .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.85rem; font-weight: bold; }
+    .badge-danger { background: #ffdce0; color: #9e0012; }
+    .badge-warning { background: #fff5c2; color: #7a5200; }
+    .badge-ok { background: #dcffe4; color: #006622; }
+  </style>
+</head>
+<body>
+
+  <h1>Monitoraggio Sostituzioni "Caselle"</h1>
+  <div id="alertsContainer"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Nome Personale</th>
+        <th>Ultima Sostituzione</th>
+        <th>Giorni Rimanenti</th>
+        <th>Stato</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr><td colspan="4">Caricamento dati in corso...</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    // INSERISCI QUI L'ID DEL TUO GOOGLE SHEET
+    const SHEET_ID = 'IL_TUO_GOOGLE_SHEET_ID_QUI';
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+
+    const LIMITE_GIORNI = 90;
+    const SOGLIA_ALERT = 10;
+
+    async function caricaDati() {
+      try {
+        const response = await fetch(CSV_URL);
+        const dataText = await response.text();
+        const righe = parseCSV(dataText);
+        
+        let htmlTable = '';
+        let personeInAlert = [];
+
+        const oggi = new Date();
+
+        // Salta l'intestazione (i = 1)
+        for (let i = 1; i < righe.length; i++) {
+          const nome = righe[i][0];
+          const dataStr = righe[i][1]; // Formato YYYY-MM-DD
+          
+          if (!nome || !dataStr) continue;
+
+          const ultimaData = new Date(dataStr);
+          const diffTempo = oggi - ultimaData;
+          const giorniTrascorsi = Math.floor(diffTempo / (1000 * 60 * 60 * 24));
+          const giorniRimanenti = LIMITE_GIORNI - giorniTrascorsi;
+
+          let statoBadge = '';
+          if (giorniRimanenti <= 0) {
+            statoBadge = `<span class="badge badge-danger">SCADUTO (${Math.abs(giorniRimanenti)} gg fa)</span>`;
+            personeInAlert.push({ nome, giorniRimanenti });
+          } else if (giorniRimanenti <= SOGLIA_ALERT) {
+            statoBadge = `<span class="badge badge-warning">IN SCADENZA</span>`;
+            personeInAlert.push({ nome, giorniRimanenti });
+          } else {
+            statoBadge = `<span class="badge badge-ok">OK</span>`;
+          }
+
+          htmlTable += `
+            <tr>
+              <td><strong>${nome}</strong></td>
+              <td>${dataStr}</td>
+              <td>${giorniRimanenti} giorni</td>
+              <td>${statoBadge}</td>
+            </tr>
+          `;
+        }
+
+        document.getElementById('tableBody').innerHTML = htmlTable;
+        mostraAlert(personeInAlert);
+
+      } catch (error) {
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="4">Errore nel caricamento dei dati da Google Drive. Controlla l\'ID o le autorizzazioni del foglio.</td></tr>';
+      }
+    }
+
+    function mostraAlert(elenco) {
+      const container = document.getElementById('alertsContainer');
+      if (elenco.length === 0) return;
+
+      let alertHTML = `<div class="alert-box"><h2>⚠️ Attenzione: Sostituzioni necessarie!</h2><ul>`;
+      elenco.forEach(p => {
+        if (p.giorniRimanenti <= 0) {
+          alertHTML += `<li><strong>${p.nome}</strong>: Scaduto da ${Math.abs(p.giorniRimanenti)} giorni!</li>`;
+        } else {
+          alertHTML += `<li><strong>${p.nome}</strong>: Mancano solo ${p.giorniRimanenti} giorni alla scadenza.</li>`;
+        }
+      });
+      alertHTML += `</ul></div>`;
+      container.innerHTML = alertHTML;
+    }
+
+    // Parser CSV essenziale
+    function parseCSV(text) {
+      return text.split('\n').map(row => {
+        return row.split(',').map(cell => cell.replace(/^"(.*)"$/, '$1').trim());
+      });
+    }
+
+    caricaDati();
+  </script>
+</body>
+</html>
